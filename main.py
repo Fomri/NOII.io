@@ -10,13 +10,14 @@ pygame.init()
 mapSize = 10000
 
 class player:
-    def __init__(self, x, y, color, mass):
+    def __init__(self, x, y, color, mass, name = ""):
         self.x = x
         self.y = y
         self.color = color
         self.mass = mass
-        self.size = 4 * sqrt(mass)*6
+        self.size = 4 + math.sqrt(mass) * 6
         self.speed = 2.2 * (mass ** (-0.439))
+        self.name = name
     
     def move(self, angle):
         velX = math.sin(angle) * self.speed
@@ -29,7 +30,7 @@ class player:
             velY = -velY
         self.y += velY
 
-        pygame.time.delay(2)
+        pygame.time.delay(5)
 
     def draw(self, window, size):
         pygame.draw.circle(window, self.color, (size[0] / 2, size[1] / 2), self.size)
@@ -42,23 +43,23 @@ def drawGrid(window, x, y, blockSize, size):
         pygame.draw.line(window, (0, 0, 0), (shiftX + i, 0), (shiftX + i, size[1]))
     
     for i in range(0, size[1], blockSize):
-        pygame.draw.line(window, (0, 0, 0), (0, shiftY + i), (size[1], shiftY + i))
+        pygame.draw.line(window, (0, 0, 0), (0, shiftY + i), (size[0], shiftY + i))
 
 
 p = player(mapSize / 2, mapSize / 2, (0, 255, 255), 20)
 
-while True:
+run = True
+while run:
     drawGrid(screen, p.x, p.y, 20, size)
     p.draw(screen, size)
-    relPosX = p.x - (size[0] * int(int(p.x) / size[0]))
-    relPosY = p.y - (size[1] * int(int(p.y) / size[1]))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            run = False
             pygame.quit()
     
     pos = pygame.mouse.get_pos()
     angle = math.atan2(pos[0] - size[0] / 2, pos[1] - size[1] / 2)
-    if (pos[0] - relPosX) ** 2 + (pos[1] - relPosY) ** 2 > p.mass ** 2:
+    if (pos[0] - 250) ** 2 + (pos[1] - 250) ** 2 > p.size ** 2:
         p.move(angle)
 
     pygame.display.update()
