@@ -15,6 +15,7 @@ class player:
         self.y = y
         self.color = color
         self.mass = mass
+        self.size = 4 * sqrt(mass)*6
         self.speed = 2.2 * (mass ** (-0.439))
     
     def move(self, angle):
@@ -31,7 +32,7 @@ class player:
         pygame.time.delay(2)
 
     def draw(self, window, size):
-        pygame.draw.circle(window, self.color, (size[0] / 2, size[1] / 2), self.mass * 1.5)
+        pygame.draw.circle(window, self.color, (size[0] / 2, size[1] / 2), self.size)
 
 def drawGrid(window, x, y, blockSize, size):
     shiftX = x - (blockSize * int(int(x) / blockSize))
