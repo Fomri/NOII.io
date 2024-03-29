@@ -13,7 +13,7 @@ class virus:
         size = window.get_size()
         if self.x < middle[0] + size[0] / 2 and self.x > middle[0] - size[0] / 2:
             if self.y < middle[1] + size[1] / 2 and self.y < middle[1] - size[1] / 2:
-                virusImage = pygame.image.load("virus.png")
+                virusImage = pygame.image.load("pictures/virus.png")
                 virusImage = pygame.transform.scale(virusImage, (self.size, self.size))
                 window.blit(virusImage, (middle[0] - self.x + size[0], middle[1] - self.y + size[1]))
 
