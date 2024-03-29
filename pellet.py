@@ -14,7 +14,7 @@ class pellet:
                 pygame.draw.circle(window, self.color, (player.x - self.x + size[0], player.y - self.y + size[1]))
 
     def eaten(self, player):
-        if self.size <= 0.8 * player.size:
+        if self.mass <= 0.8 * player.mass:
             x1 = player.x
             x2 = self.x
             y1 = player.y
