@@ -1,11 +1,13 @@
 import pygame
+import math
 
 class pellet:
-    def __init__(self, x, y, color, size = 10):
+    def __init__(self, x, y, color, mass = 1):
         self.x = x
         self.y = y
         self.color = color
-        self.size = size
+        self.mass = mass
+        self.size = 4 + math.sqrt(self.mass)
 
     def draw(self, window , player):
         size = window.get_size()
