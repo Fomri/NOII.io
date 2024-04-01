@@ -1,5 +1,6 @@
 import pygame
 import math
+import json
 
 class player:
     def __init__(self, x, y, color, mass, name = ""):
@@ -40,3 +41,7 @@ class player:
     def update(self):
         self.size = 4 + math.sqrt(self.mass) * 6
         self.speed = 2 * (self.mass ** -0.5)
+
+    def to_json(self):
+        data = [self.x, self.y, self.color, self.speed, self.size, self.name]
+        retarn json.dumps(data)
