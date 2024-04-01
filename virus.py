@@ -1,11 +1,11 @@
 import pygame
 import math
+import json
 
 class virus:
-    def __init__(self, x, y, color = (0, 255, 0), mass = 100):
+    def __init__(self, x, y, mass = 100):
         self.x = x
         self.y = y
-        self.color = color
         self.mass = mass
         self.size = 4 + math.sqrt(self.mass) * 6
 
@@ -26,3 +26,7 @@ class virus:
                 return True
         
         return False
+
+    def to_json(self):
+        data = [self.x, self.y, self.mass]
+        return json.dumps(data)
