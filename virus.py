@@ -7,9 +7,9 @@ class virus:
         self.y = y
         self.color = color
         self.mass = mass
-        self.size = 4 + math.sqrt(self.mass)
+        self.size = 4 + math.sqrt(self.mass) * 6
 
-    def draw(self, middle, window):
+    def draw(self, middle, window, ratio):
         size = window.get_size()
         if self.x < middle[0] + size[0] / 2 and self.x > middle[0] - size[0] / 2:
             if self.y < middle[1] + size[1] / 2 and self.y < middle[1] - size[1] / 2:
