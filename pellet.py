@@ -1,5 +1,6 @@
 import pygame
 import math
+import json
 
 class pellet:
     def __init__(self, x, y, color, mass = 1):
@@ -7,7 +8,7 @@ class pellet:
         self.y = y
         self.color = color
         self.mass = mass
-        self.size = 4 + math.sqrt(self.mass)
+        self.size = 4 + math.sqrt(self.mass) * 6
 
     def draw(self, window , player):
         size = window.get_size()
@@ -27,3 +28,7 @@ class pellet:
                 return True
             
         return False
+
+def to_json(self):
+    data = [self.x, self.y, self.mass, self.size]
+    return json.dumps(data)
