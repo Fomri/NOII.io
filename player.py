@@ -3,7 +3,7 @@ import math
 import json
 
 class player:
-    def __init__(self, x, y, color, mass, addr, name = ""):
+    def __init__(self, x, y, color, addr, mass = 20, name = ""):
         self.x = x
         self.y = y
         self.color = color
