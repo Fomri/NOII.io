@@ -61,6 +61,17 @@ def move(conn, addr, clientToPlayer, playersList):
         player.move(angle, MAP_SIZE)
     clientToPlayer[addr[0]] = player
 
+def newPlayer(conn, addr, playersList, clientsToPlayer){
+    x = random.randint(0, MAP_SIZE)
+    y = random.randint(0, MAP_SIZE)
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    new = player.player(x, y, (r, g, b), addr)
+    playersList.append(new)
+    clientToPlayer[conn] = new
+}
+
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -69,9 +80,9 @@ def main():
     server.listen(10)
     list_of_clients = []
 
-    pelletsList = {}
+    pelletsList = []
     clientToPlayer = {}
-    playersList = {}
+    playersList = []
 
     generate.generatePellets(pelletsList)
     
@@ -79,6 +90,7 @@ def main():
         conn, addr = server.accept()
         list_of_clients.append(conn)
         print (addr[0] + " connected")
+        newPlayer(conn, addr, playersList, clientToPlayers)
         _thread.start_new_thread(clientthread,(conn, pelletsList, clientToPlayer, playersList))
         generate.generatePellets(pelletsList)
     
