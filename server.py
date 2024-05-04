@@ -2,12 +2,13 @@ import socket
 import _thread
 import json
 import math
+import generate
 from settings import *
 
-def sendDataAndInter(conn, addr, entetyList, clientToPlayer, playersList):
+def sendDataAndInter(conn, addr, pelletsList, clientToPlayer, playersList):
     sendingData = []
-    for entety in entetyList:
-        if not checkInter(addr, clientToPlayer, entety, entetyList, playersList):
+    for entety in pelletsList:
+        if not checkInter(addr, clientToPlayer, entety, pelletsList, playersList):
             sendingData.append(entety)
     
     for blob in playersList:
@@ -16,16 +17,16 @@ def sendDataAndInter(conn, addr, entetyList, clientToPlayer, playersList):
 
     broadcast(json.dumps(sendingData), conn)
 
-def checkInter(addr, clientToPlayer, entety, entetyList, playerType = False):
+def checkInter(addr, clientToPlayer, entety, pelletsList, playerType = False):
     player = clientToPlayer[addr[0]]
     if entety.eaten(player):
-        entetyList.remove(entety)
+        pelletsList.remove(entety)
         if playerType:
             addr = entety.addr
             clientToPlayer.pop(addr[0], entety)
             
         else:
-            entetyList.remove(entety)
+            pelletsList.remove(entety)
         return True
     return False
 
@@ -36,9 +37,9 @@ def broadcast(message, conn):
         conn.close()
         return -1
 
-def clientthread(conn, addr, listOfClients, entetyList, clientToPlayer, playersList):
+def clientthread(conn, addr, listOfClients, pelletsList, clientToPlayer, playersList):
     while True:
-        if sendDataAndInter(conn, entetyList, clientToPlayer, playersList) == -1:
+        if sendDataAndInter(conn, pelletsList, clientToPlayer, playersList) == -1:
             player = clientToPlayer[addr[0]]
             clientToPlayer.pop(addr[0], player)
             listOfClients.remove(conn)
@@ -68,16 +69,19 @@ def main():
     server.listen(10)
     list_of_clients = []
 
-    entetyList = {}
+    pelletsList = {}
     clientToPlayer = {}
     playersList = {}
 
+    generate.generatePellets(pelletsList)
+    
     while True:
         conn, addr = server.accept()
         list_of_clients.append(conn)
         print (addr[0] + " connected")
-        _thread.start_new_thread(clientthread,(conn, entetyList, clientToPlayer, playersList))
-
+        _thread.start_new_thread(clientthread,(conn, pelletsList, clientToPlayer, playersList))
+        generate.generatePellets(pelletsList)
+    
     for conn in list_of_clients:
         conn.close()
 
