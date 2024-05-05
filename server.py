@@ -12,21 +12,22 @@ def sendDataAndInter(conn, addr, pelletsList, clientToPlayer, playersList):
             sendingData.append(entety)
     
     for blob in playersList:
-        if not checkInter(addr, clientToPlayer, blob, playersList, True):
+        if not checkInter(addr, clientToPlayer, blob, pelletsList, playersList, True):
             sendingData.append(blob)
 
     broadcast(json.dumps(sendingData), conn)
 
-def checkInter(addr, clientToPlayer, entety, pelletsList, playerType = False):
+def checkInter(addr, clientToPlayer, entety, pelletsList, playersList, playerType = False):
     player = clientToPlayer[addr[0]]
     if entety.eaten(player):
         pelletsList.remove(entety)
         if playerType:
-            addr = entety.addr
-            clientToPlayer.pop(addr[0], entety)
-            
+            addr2 = entety.addr
+            clientToPlayer.pop(addr2[0], entety)
+            playersList.remove(entety)
         else:
             pelletsList.remove(entety)
+        clientToPlayer[addr[0]] = player
         return True
     return False
 
