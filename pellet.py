@@ -10,7 +10,7 @@ class pellet:
         self.mass = mass
         self.size = 4 + math.sqrt(self.mass) * 6
 
-    def draw(self, window , middle, ratio):
+    def draw(self, middle, window, ratio):
         size = window.get_size()
         if self.x < middle[0] + size[0] / (2 * ratio) and self.x > middle[0] - size[0] / (2 * ratio):
             if self.y < middle[1] + size[1] / (2 * ratio) and self.y > middle[1] - size[1] / (2 * ratio):
