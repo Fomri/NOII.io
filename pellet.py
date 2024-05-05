@@ -29,6 +29,6 @@ class pellet:
             
         return False
 
-def to_json(self):
-    data = [self.x, self.y, self.mass, self.size]
-    return json.dumps(data)
+    def to_json(self):
+        data = [self.x, self.y, self.mass, self.size]
+        return json.dumps(data)
