@@ -3,75 +3,98 @@ import _thread
 import json
 import math
 import generate
+import random
+import player
 from settings import *
 
-def sendDataAndInter(conn, addr, pelletsList, clientToPlayer, playersList):
-    sendingData = []
-    for entety in pelletsList:
-        if not checkInter(addr, clientToPlayer, entety, pelletsList, playersList):
-            sendingData.append(entety)
-    
-    for blob in playersList:
-        if not checkInter(addr, clientToPlayer, blob, pelletsList, playersList, True):
-            sendingData.append(blob)
-
-    broadcast(json.dumps(sendingData), conn)
-
-def checkInter(addr, clientToPlayer, entety, pelletsList, playersList, playerType = False):
-    player = clientToPlayer[addr[0]]
+def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, playerType = False):
+    playersList.remove(player)
+    clientToPlayer.pop(conn)
     if entety.eaten(player):
-        pelletsList.remove(entety)
+        playersList.append(player)
+        clientToPlayer[conn] = player
         if playerType:
-            addr2 = entety.addr
-            clientToPlayer.pop(addr2[0], entety)
+            conn2 = entety.conn
+            clientToPlayer.pop(conn2, None)
+            conn2.close()
             playersList.remove(entety)
         else:
             pelletsList.remove(entety)
-        clientToPlayer[addr[0]] = player
         return True
+    playersList.append(player)
+    clientToPlayer[conn] = player
     return False
 
 def broadcast(message, conn):
     try:
-        conn.send(message.encode())
-    except:
-        conn.close()
+        message = message + b'END_OF_TRANSMITION'
+        conn.sendall(message)
+        return 0
+    except Exception as e:
+        print(e)
         return -1
 
-def clientthread(conn, addr, listOfClients, pelletsList, clientToPlayer, playersList):
+def handleError(conn, addr, clientToPlayer, playersList, listOfClients):
+    player = clientToPlayer[conn]
+    clientToPlayer.pop(conn, None)
+    listOfClients.remove(conn)
+    playersList.remove(player)
+    conn.close()
+    print (addr[0] + " disconnected")
+
+def  clientThread(conn, addr, listOfClients, pelletsList, clientToPlayer, playersList):
     while True:
+        try:
+            move(conn, clientToPlayer, playersList)
+        except:
+            handleError(conn, addr, clientToPlayer, playersList, listOfClients)
+            return -1
+        
         if sendDataAndInter(conn, pelletsList, clientToPlayer, playersList) == -1:
-            player = clientToPlayer[addr[0]]
-            clientToPlayer.pop(addr[0], player)
-            listOfClients.remove(conn)
-            playersList.remove(player)
-            conn.close()
+            handleError(conn, addr, clientToPlayer, playersList, listOfClients)
             return -1
 
-def move(conn, addr, clientToPlayer, playersList):
-    pos = json.load(conn.recv(1024).decode())
-    middleScreen = (clientToPlayer[addr[0]].x, clientToPlayer[addr[0]].y)
+def move(conn, clientToPlayer, playersList):
+    pos = json.loads(conn.recv(4096).decode('utf8'))
 
-    player = clientToPlayer[addr[0]]
-    y = player.y - middleScreen[1]
-    x = player.x - middleScreen[0]
-    angle = math.atan2(VIEW_SIZE[1] / 2 - pos[1] - y, VIEW_SIZE[0] / 2 - pos[0] - x)
-    clientToPlayer.pop(addr[0], player)
+    player = clientToPlayer[conn]
+    angle = math.atan2(VIEW_SIZE[1] / 2 - pos[1], VIEW_SIZE[0] / 2 - pos[0])
+    clientToPlayer.pop(conn, player)
     playersList.remove(player)
-    if (pos[0] - x) ** 2 + (pos[1] - y) ** 2 > player.size ** 2:
+    if (pos[0] - VIEW_SIZE[0] / 2) ** 2 + (pos[1] - VIEW_SIZE[1] / 2) ** 2 > player.size ** 2:
         player.move(angle, MAP_SIZE)
-    clientToPlayer[addr[0]] = player
+    clientToPlayer[conn] = player
+    playersList.append(player)
 
-def newPlayer(conn, addr, playersList, clientsToPlayer){
-    x = random.randint(0, MAP_SIZE)
-    y = random.randint(0, MAP_SIZE)
+def sendDataAndInter(conn, entetyList, clientToPlayer, playersList):
+    sendingPellets = []
+    sendingPlayers = []
+    player = clientToPlayer[conn]
+    for entety in entetyList:
+        if not checkInter(conn, player, clientToPlayer, entety, entetyList, playersList):
+            sendingPellets.append(entety.to_json())
+    
+    for blob in playersList:
+        if not checkInter(conn, player, clientToPlayer, blob, entetyList, playersList, True):
+            sendingPlayers.append(blob.to_json())
+    
+    message = json.dumps((player.to_json(), sendingPellets, sendingPlayers))
+    return broadcast(bytes(message, encoding='utf8'), conn)
+
+def newPlayer(conn, playersList, clientToPlayer):
+    size = 4 + math.sqrt(10) * 6
+    x = random.randint(int(size), int(MAP_SIZE[0] - size))
+    y = random.randint(int(size), int(MAP_SIZE[1] - size))
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
-    new = player.player(x, y, (r, g, b), addr)
+    new = player.player(x, y, (r, g, b), conn)
     playersList.append(new)
     clientToPlayer[conn] = new
-}
+
+def keepPelletsNum(pelletsList):
+    while True:
+        generate.generatePellets(pelletsList)
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -79,21 +102,19 @@ def main():
 
     server.bind((IP_ADDRESS, PORT))
     server.listen(10)
-    list_of_clients = []
+    listOfClients = []
 
     pelletsList = []
     clientToPlayer = {}
     playersList = []
 
-    generate.generatePellets(pelletsList)
-    
+    _thread.start_new_thread(keepPelletsNum, (pelletsList,))
     while True:
         conn, addr = server.accept()
-        list_of_clients.append(conn)
+        listOfClients.append(conn)
         print (addr[0] + " connected")
-        newPlayer(conn, addr, playersList, clientToPlayers)
-        _thread.start_new_thread(clientthread,(conn, pelletsList, clientToPlayer, playersList))
-        generate.generatePellets(pelletsList)
+        newPlayer(conn, playersList, clientToPlayer)
+        _thread.start_new_thread(clientThread, (conn, addr, listOfClients, pelletsList, clientToPlayer, playersList))
     
     for conn in list_of_clients:
         conn.close()
