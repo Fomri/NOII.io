@@ -7,6 +7,7 @@ import random
 import player
 from settings import *
 
+
 def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, playerType = False):
     playersList.remove(player)
     clientToPlayer.pop(conn)
@@ -14,10 +15,13 @@ def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, p
         playersList.append(player)
         clientToPlayer[conn] = player
         if playerType:
-            conn2 = entety.conn
-            clientToPlayer.pop(conn2, None)
-            conn2.close()
-            playersList.remove(entety)
+            try:
+                conn2 = entety.conn
+                clientToPlayer.pop(conn2, None)
+                conn2.close()
+                playersList.remove(entety)
+            except:
+                return True
         else:
             pelletsList.remove(entety)
         return True
@@ -35,12 +39,16 @@ def broadcast(message, conn):
         return -1
 
 def handleError(conn, addr, clientToPlayer, playersList, listOfClients):
-    player = clientToPlayer[conn]
-    clientToPlayer.pop(conn, None)
-    listOfClients.remove(conn)
-    playersList.remove(player)
-    conn.close()
     print (addr[0] + " disconnected")
+    try:
+        player = clientToPlayer[conn]
+        clientToPlayer.pop(conn, None)
+        listOfClients.remove(conn)
+        playersList.remove(player)
+        conn.close()
+    except:
+        return
+        
 
 def  clientThread(conn, addr, listOfClients, pelletsList, clientToPlayer, playersList):
     while True:
@@ -107,7 +115,7 @@ def main():
     pelletsList = []
     clientToPlayer = {}
     playersList = []
-
+  
     _thread.start_new_thread(keepPelletsNum, (pelletsList,))
     while True:
         conn, addr = server.accept()
