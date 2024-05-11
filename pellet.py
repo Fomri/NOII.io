@@ -22,13 +22,18 @@ class pellet:
             x2 = self.x
             y1 = player.y
             y2 = self.y
-            if (x1 - x2) ** 2 + (y1 - y2) ** 2 <= player.size - self.size:
-                player.mass += 1
+            if (x1 - x2) ** 2 + (y1 - y2) ** 2 <= (player.size - self.size) ** 2:
+                player.mass += self.mass
                 player.update()
                 return True
             
         return False
 
     def to_json(self):
-        data = [self.x, self.y, self.mass, self.size]
+        data = [self.x, self.y, self.color, self.mass]
         return json.dumps(data)
+    
+def from_json(data):
+    data = json.loads(data)
+    new = pellet(data[0], data[1], data[2], data[3])
+    return new
