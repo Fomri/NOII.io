@@ -63,8 +63,7 @@ def findRatio(player):
     if maxDiff > 300:
         ratio = maxDiff / 300
     
-    return ratio
-
+    return ratio 
 
 def updateData():
     message = recvall(server, 4096)
@@ -77,7 +76,19 @@ def updateData():
     playersList = []
     for entety in recieved:
         playersList.append(player.from_json(entety))
+
+    playersList = sorted(playersList, key = sortPlayersKey)
+    printPlayers(playersList)
     return (p, pelletsList, playersList)
+
+def sortPlayersKey(player):
+    return player.size
+
+def printPlayers(playersList):
+    l = []
+    for player in playersList:
+        l.append(player.to_json())
+    print(l)
 
 def main():
     pos = (VIEW_SIZE[0] / 2, VIEW_SIZE[1] / 2)
