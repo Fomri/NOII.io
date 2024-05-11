@@ -3,7 +3,7 @@ import math
 import json
 
 class player:
-    def __init__(self, x, y, color, addr, mass = 20, name = ""):
+    def __init__(self, x, y, color, conn, mass = 10, name = ""):
         self.x = x
         self.y = y
         self.color = color
@@ -11,7 +11,7 @@ class player:
         self.size = 4 + math.sqrt(mass) * 6
         self.speed = 2 * (mass ** -0.5)
         self.name = name
-        self.addr = addr[0]
+        self.conn = conn
 
     def move(self, angle, mapSize):
         velX = math.cos(angle) * self.speed
@@ -40,10 +40,27 @@ class player:
         window.blit(text_surface, text_rect)
         pygame.display.update()
 
+    def eaten(self, player):
+        if self.mass <= 0.8 * player.mass:
+            x1 = player.x
+            x2 = self.x
+            y1 = player.y
+            y2 = self.y
+            if (x1 - x2) ** 2 + (y1 - y2) ** 2 <= (player.size - self.size) ** 2:
+                player.mass += self.mass
+                player.update()
+                return True
+        return False
+    
     def update(self):
         self.size = 4 + math.sqrt(self.mass) * 6
         self.speed = 2 * (self.mass ** -0.5)
 
     def to_json(self):
-        data = [self.x, self.y, self.color, self.mass, self.size, self.speed, self.name]
+        data = [self.x, self.y, self.color, '', self.mass, self.name]
         return json.dumps(data)
+    
+def from_json(data):
+    data = json.loads(data)
+    new = player(data[0], data[1], data[2], data[3], data[4], data[5])
+    return new
