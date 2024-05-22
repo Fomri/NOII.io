@@ -4,6 +4,7 @@ import socket
 import player
 import pellet
 import json
+import _thread
 
 End = 'END_OF_TRANSMITION'
 data = ''
@@ -63,7 +64,7 @@ def updateData(server):
         playersList.append(player.from_json(entety))
 
     playersList = sorted(playersList, key = sortPlayersKey)
-    return (p, pelletsList, playersList)
+    return (p, playersList, pelletsList)
 
 def sortPlayersKey(player):
     return player.size
@@ -84,7 +85,7 @@ def main(name):
     pelletsList = []
     while True:
         try:
-            p, pelletsList, playersList = updateData(server)
+            p, playersList, pelletsList = updateData(server)
             ratio = findRatio(p)
             drawBorders(screen, (p.x, p.y))
             middle = (p.x, p.y)
@@ -101,5 +102,7 @@ def main(name):
             pygame.display.update()
             screen.fill((255, 255, 255))
 
-        except:
+        except Exception as e:
+            print(e)
             break
+
