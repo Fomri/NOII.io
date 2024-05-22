@@ -1,112 +1,72 @@
 import pygame
+import client
 
-
-# pygame.init() will initialize all 
-# imported module 
 pygame.init() 
-
 clock = pygame.time.Clock() 
 
-# it will display on screen 
-screen = pygame.display.set_mode([500, 500]) 
+screen = pygame.display.set_mode((500, 500)) 
 
-# basic font for user typed 
 base_font = pygame.font.Font(None, 32) 
 user_text = '' 
 
-# create rectangle 
-input_rect = pygame.Rect(200, 200, 140, 32)
+input_rect = pygame.Rect(200, 100, 140, 32)
 
-# color_active stores color(lightskyblue3) which 
-# gets active when input box is clicked by user 
 color_active = pygame.Color('lightskyblue3') 
 
-# color_passive store color(chartreuse4) which is 
-# color of input box. 
 color_passive = pygame.Color('chartreuse4') 
 color = color_passive 
-
 active = False
+
+nameWriten = False
+user_text = "Enter Name"
+
+play_button = pygame.Rect(200, 250, 140, 32)
 
 while True: 
 	for event in pygame.event.get(): 
-
-	# if user types QUIT then the screen will close 
-		if event.type == pygame.QUIT: 
+		if event.type == pygame.QUIT:
 			pygame.quit()
 			break
 
 		if event.type == pygame.MOUSEBUTTONDOWN: 
 			if input_rect.collidepoint(event.pos): 
-				active = True
+				active = not active
 			else: 
 				active = False
+			if(play_button.collidepoint(event.pos)):
+				if(nameWriten):
+					client.main(user_text)
+				else:
+					client.main('')
 
-		if event.type == pygame.KEYDOWN: 
-
-			# Check for backspace 
+		if event.type == pygame.KEYDOWN and active: 
+			if(not nameWriten):
+				user_text = ""
+			nameWriten = True
 			if event.key == pygame.K_BACKSPACE: 
-
-				# get text input from 0 to -1 i.e. end. 
 				user_text = user_text[:-1] 
-
-			# Unicode standard is used for string 
-			# formation 
 			else: 
 				user_text += event.unicode
-	
-	# it will set background color of screen 
+			if(user_text == ""):
+				nameWriten = False
+				user_text = "Enter Name"
 	screen.fill((255, 255, 255)) 
 
 	if active: 
 		color = color_active 
 	else: 
 		color = color_passive 
-		
-	# draw rectangle and argument passed which should 
-	# be on screen 
+
 	pygame.draw.rect(screen, color, input_rect) 
-
 	text_surface = base_font.render(user_text, True, (255, 255, 255)) 
-	
-	# render at position stated in arguments 
-	screen.blit(text_surface, (input_rect.x+5, input_rect.y+5)) 
-	
-	# set width of textfield so that text cannot get 
-	# outside of user's text input 
-	input_rect.w = max(100, text_surface.get_width()+10) 
-	
-	# display.flip() will update only a portion of the 
-	# screen to updated, not full area 
+	screen.blit(text_surface, (input_rect.centerx - text_surface.get_width() / 2, input_rect.centery - base_font.get_ascent() / 2)) 
+	play_surface = base_font.render("Play Game", True, (255, 255, 255))
+	pygame.draw.rect(screen, color_passive, play_button) 
+	screen.blit(play_surface, (250 - play_surface.get_width() / 2, 250 - base_font.get_ascent() / 2)) 
+
+	input_rect.w = max(140, text_surface.get_width()+10)
+	input_rect.center = (250, 100)
+	play_button.w = play_surface.get_width() + 10
+	play_button.center = (250, 250)
 	pygame.display.flip() 
-	
-	# clock.tick(60) means that for every second at most 
-	# 60 frames should be passed. 
 	clock.tick(60)
-	
-
-def numToHex(num):
-	if num == 0:
-		return '0'
-	reminder = num % 16
-	return numToHex(num // 16) + str(reminder)
-
-def hexToNum(hex):
-	firstDig = 0
-	if hex[0] >= '0' and hex[0] <= '9':
-		firstDig = int(hex[1])
-	else:
-		firstDig = hex[0] - 'A' + 10
-	secondDig = 0
-	if hex[1] >= '0' and hex[1] <= '9':
-		secondDig = int(hex[1])
-	else:
-		secondDig = hex[1] - 'A' + 10
-	return firstDig*16+secondDig
-
-
-def hexToRGB(hex):
-	r = hexToNum(hex[:2])
-	g = hexToNum(hex[2:4])
-	b = hexToNum(hex[4:6])
-	return (r, g, b)
