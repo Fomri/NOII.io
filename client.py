@@ -5,15 +5,21 @@ import player
 import pellet
 import json
 
-End='END_OF_TRANSMITION'
+End = 'END_OF_TRANSMITION'
 data = ''
 def recvall(the_socket, bufferSize):
     total_data=[]
+    global data
+    if End in data:
+        total_data.append(data[:data.find(End)])
+        data = data[data.find(End) + 18:]
+        return json.loads(''.join(total_data))
+
     while True:
-            data=the_socket.recv(bufferSize).decode('utf8')
+            data = data + the_socket.recv(bufferSize).decode('utf8')
             if End in data:
                 total_data.append(data[:data.find(End)])
-                data = data + data[data.find(End):]
+                data = data[data.find(End) + 18:]
                 break
             total_data.append(data)
             if len(total_data)>1:
@@ -24,6 +30,7 @@ def recvall(the_socket, bufferSize):
                     total_data.pop()
                     break
     return json.loads(''.join(total_data))
+
 
 def drawBorders(window, middle):
     upMax = min(middle[1] - MAP_SIZE[1] + VIEW_SIZE[1] / 2, VIEW_SIZE[1])
