@@ -7,6 +7,31 @@ import random
 import player
 from settings import *
 
+End = 'END_OF_TRANSMITION'
+data = ''
+def recvall(the_socket, bufferSize):
+    total_data=[]
+    global data
+    if End in data:
+        total_data.append(data[:data.find(End)])
+        data = data[data.find(End) + 18:]
+        return json.loads(''.join(total_data))
+
+    while True:
+            data = data + the_socket.recv(bufferSize).decode('utf8')
+            if End in data:
+                total_data.append(data[:data.find(End)])
+                data = data[data.find(End) + 18:]
+                break
+            total_data.append(data)
+            if len(total_data)>1:
+                #check if end_of_data was split
+                last_pair = total_data[-2] + total_data[-1]
+                if End in last_pair:
+                    total_data[-2]=last_pair[:last_pair.find(End)]
+                    total_data.pop()
+                    break
+    return json.loads(''.join(total_data))
 
 def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, playerType = False):
     playersList.remove(player)
@@ -31,7 +56,7 @@ def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, p
 
 def broadcast(message, conn):
     try:
-        message = message + b'END_OF_TRANSMITION'
+        message = bytes(message + End, encoding='utf8')
         conn.sendall(message)
         return 0
     except Exception as e:
@@ -50,7 +75,7 @@ def handleError(conn, addr, clientToPlayer, playersList, listOfClients):
         return
         
 
-def  clientThread(conn, addr, listOfClients, pelletsList, clientToPlayer, playersList):
+def clientThread(conn, addr, listOfClients, pelletsList, clientToPlayer, playersList):
     while True:
         try:
             move(conn, clientToPlayer, playersList)
@@ -63,7 +88,7 @@ def  clientThread(conn, addr, listOfClients, pelletsList, clientToPlayer, player
             return -1
 
 def move(conn, clientToPlayer, playersList):
-    pos = json.loads(conn.recv(4096).decode('utf8'))
+    pos = recvall(conn, 4096)
 
     player = clientToPlayer[conn]
     angle = math.atan2(VIEW_SIZE[1] / 2 - pos[1], VIEW_SIZE[0] / 2 - pos[0])
@@ -87,16 +112,16 @@ def sendDataAndInter(conn, entetyList, clientToPlayer, playersList):
             sendingPlayers.append(blob.to_json())
     
     message = json.dumps((player.to_json(), sendingPellets, sendingPlayers))
-    return broadcast(bytes(message, encoding='utf8'), conn)
+    return broadcast(message, conn)
 
-def newPlayer(conn, playersList, clientToPlayer):
+def newPlayer(conn, playersList, clientToPlayer, name):
     size = 4 + math.sqrt(10) * 6
     x = random.randint(int(size), int(MAP_SIZE[0] - size))
     y = random.randint(int(size), int(MAP_SIZE[1] - size))
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
-    new = player.player(x, y, (r, g, b), conn)
+    new = player.player(x, y, (r, g, b), conn, name)
     playersList.append(new)
     clientToPlayer[conn] = new
 
@@ -121,7 +146,8 @@ def main():
         conn, addr = server.accept()
         listOfClients.append(conn)
         print (addr[0] + " connected")
-        newPlayer(conn, playersList, clientToPlayer)
+        name = recvall(conn, 4096)
+        newPlayer(conn, playersList, clientToPlayer, name)
         _thread.start_new_thread(clientThread, (conn, addr, listOfClients, pelletsList, clientToPlayer, playersList))
     
     for conn in list_of_clients:
