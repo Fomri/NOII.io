@@ -3,7 +3,7 @@ import math
 import json
 
 class player:
-    def __init__(self, x, y, color, conn, mass = 10, name = ""):
+    def __init__(self, x, y, color, conn, name = '', mass = 10):
         self.x = x
         self.y = y
         self.color = color
@@ -34,7 +34,7 @@ class player:
         size = window.get_size()
         pos = (middle[0] - self.x + size[0] / 2, middle[1] - self.y + size[1] / 2)
         pygame.draw.circle(window, self.color, pos , self.size / ratio)
-        font = pygame.font.Font(None, int(18 / ratio))
+        font = pygame.font.Font(None, 32 // ratio)
         text_surface = font.render(self.name, True, (0, 0, 0))
         text_rect = text_surface.get_rect(center = pos)
         window.blit(text_surface, text_rect)
@@ -57,7 +57,7 @@ class player:
         self.speed = 2 * (self.mass ** -0.5)
 
     def to_json(self):
-        data = [self.x, self.y, self.color, '', self.mass, self.name]
+        data = [self.x, self.y, self.color, '', self.name, self.mass]
         return json.dumps(data)
     
 def from_json(data):
