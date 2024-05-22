@@ -5,23 +5,15 @@ import player
 import pellet
 import json
 
-screen = pygame.display.set_mode(VIEW_SIZE)
-screen.fill((255, 255, 255))
-pygame.display.update()
-pygame.init()
-
-blockSize = 30
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-server.connect((IP_ADDRESS, PORT)) 
-
 End='END_OF_TRANSMITION'
+data = ''
 def recvall(the_socket, bufferSize):
-    total_data=[];data=''
+    total_data=[]
     while True:
             data=the_socket.recv(bufferSize).decode('utf8')
             if End in data:
                 total_data.append(data[:data.find(End)])
+                data = data + data[data.find(End):]
                 break
             total_data.append(data)
             if len(total_data)>1:
@@ -32,20 +24,6 @@ def recvall(the_socket, bufferSize):
                     total_data.pop()
                     break
     return json.loads(''.join(total_data))
-
-def drawGrid(window, player, block_size, size):
-    shiftX = player.x - player.size - block_size * int((player.x - player.size) / block_size)
-    shiftY = player.y - player.size - block_size * int((player.y - player.size) / block_size)
-    
-    i = 0
-    while i < size[0]:
-        pygame.draw.line(window, (128,128,128), (shiftX + i, 0), (shiftX + i, size[1]))
-        i += block_size
-    
-    i = 0
-    while i < size[1]:
-        pygame.draw.line(window, (128,128,128), (0, shiftY + i), (size[0], shiftY + i))
-        i += block_size
 
 def drawBorders(window, middle):
     upMax = min(middle[1] - MAP_SIZE[1] + VIEW_SIZE[1] / 2, VIEW_SIZE[1])
@@ -65,7 +43,7 @@ def findRatio(player):
     
     return ratio 
 
-def updateData():
+def updateData(server):
     message = recvall(server, 4096)
     p = player.from_json(message[0])
     recieved = message[1]
@@ -78,27 +56,29 @@ def updateData():
         playersList.append(player.from_json(entety))
 
     playersList = sorted(playersList, key = sortPlayersKey)
-    printPlayers(playersList)
     return (p, pelletsList, playersList)
 
 def sortPlayersKey(player):
     return player.size
 
-def printPlayers(playersList):
-    l = []
-    for player in playersList:
-        l.append(player.to_json())
-    print(l)
+def main(name):
+    screen = pygame.display.set_mode(VIEW_SIZE)
+    screen.fill((255, 255, 255))
+    pygame.display.update()
+    pygame.init()
 
-def main():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    server.connect((IP_ADDRESS, PORT)) 
+
+    server.sendall(bytes(json.dumps(name) + End, encoding = 'utf8'))
+
     pos = (VIEW_SIZE[0] / 2, VIEW_SIZE[1] / 2)
-    server.sendall(bytes(json.dumps(pos), encoding='utf8'))
+    server.sendall(bytes(json.dumps(pos) + End, encoding='utf8'))
     pelletsList = []
     while True:
         try:
-            p, pelletsList, playersList = updateData()
+            p, pelletsList, playersList = updateData(server)
             ratio = findRatio(p)
-            #drawGrid(screen, p, blockSize / ratio, VIEW_SIZE)
             drawBorders(screen, (p.x, p.y))
             middle = (p.x, p.y)
             for entety in pelletsList:
@@ -110,11 +90,9 @@ def main():
                     pygame.quit()
                     break
             pos = pygame.mouse.get_pos()
-            server.sendall(bytes(json.dumps(pos), encoding='utf8'))
+            server.sendall(bytes(json.dumps(pos) + End, encoding='utf8'))
             pygame.display.update()
             screen.fill((255, 255, 255))
 
         except:
             break
-
-main()
