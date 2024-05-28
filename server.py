@@ -5,37 +5,26 @@ import math
 import generate
 import random
 import player
+import pygame
 from settings import *
 
 End = 'END_OF_TRANSMITION'
-data = ''
-def recvall(the_socket, bufferSize):
-    total_data=[]
-    global data
+def recvall(the_socket, bufferSize, data):
     if End in data:
-        total_data.append(data[:data.find(End)])
+        value =  json.loads(data[:data.find(End)])
         data = data[data.find(End) + 18:]
-        return json.loads(''.join(total_data))
+        return (value, data)
 
     while True:
             data = data + the_socket.recv(bufferSize).decode('utf8')
+            if(data == ''):
+                raise Exception("connection killed")
             if End in data:
-                total_data.append(data[:data.find(End)])
+                value =  json.loads(data[:data.find(End)])
                 data = data[data.find(End) + 18:]
-                break
-            total_data.append(data)
-            if len(total_data)>1:
-                #check if end_of_data was split
-                last_pair = total_data[-2] + total_data[-1]
-                if End in last_pair:
-                    total_data[-2]=last_pair[:last_pair.find(End)]
-                    total_data.pop()
-                    break
-    return json.loads(''.join(total_data))
+                return (value, data)
 
 def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, playerType = False):
-    playersList.remove(player)
-    clientToPlayer.pop(conn)
     if entety.eaten(player):
         playersList.append(player)
         clientToPlayer[conn] = player
@@ -45,23 +34,17 @@ def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, p
                 clientToPlayer.pop(conn2, None)
                 conn2.close()
                 playersList.remove(entety)
-            except:
+            except Exception as e:
+                print(e)
                 return True
         else:
             pelletsList.remove(entety)
         return True
-    playersList.append(player)
-    clientToPlayer[conn] = player
     return False
 
 def broadcast(message, conn):
-    try:
-        message = bytes(message + End, encoding='utf8')
-        conn.sendall(message)
-        return 0
-    except Exception as e:
-        print(e)
-        return -1
+    message = bytes(message + End, encoding='utf8')
+    conn.sendall(message)
 
 def handleError(conn, addr, clientToPlayer, playersList, listOfClients):
     print (addr[0] + " disconnected")
@@ -76,19 +59,20 @@ def handleError(conn, addr, clientToPlayer, playersList, listOfClients):
         
 
 def clientThread(conn, addr, listOfClients, pelletsList, clientToPlayer, playersList):
-    while True:
-        try:
-            move(conn, clientToPlayer, playersList)
-        except:
-            handleError(conn, addr, clientToPlayer, playersList, listOfClients)
-            return -1
-        
-        if sendDataAndInter(conn, pelletsList, clientToPlayer, playersList) == -1:
-            handleError(conn, addr, clientToPlayer, playersList, listOfClients)
-            return -1
+    try:
+        clock = pygame.time.Clock()
+        name, data= recvall(conn, 4096, '')
+        newPlayer(conn, playersList, clientToPlayer, name)
+        while True:
+            data = move(conn, clientToPlayer, playersList, data)
+            sendDataAndInter(conn, pelletsList, clientToPlayer, playersList)
+            clock.tick(30)
+    except:
+        handleError(conn, addr, clientToPlayer, playersList, listOfClients)
+        return -1
 
-def move(conn, clientToPlayer, playersList):
-    pos = recvall(conn, 4096)
+def move(conn, clientToPlayer, playersList, data):
+    pos, remaine = recvall(conn, 4096, data)
 
     player = clientToPlayer[conn]
     angle = math.atan2(VIEW_SIZE[1] / 2 - pos[1], VIEW_SIZE[0] / 2 - pos[0])
@@ -98,21 +82,35 @@ def move(conn, clientToPlayer, playersList):
         player.move(angle, MAP_SIZE)
     clientToPlayer[conn] = player
     playersList.append(player)
+    return remaine
 
 def sendDataAndInter(conn, entetyList, clientToPlayer, playersList):
     sendingPellets = []
     sendingPlayers = []
     player = clientToPlayer[conn]
+    ratio = findRatio(player)
+    middle = (player.x, player.y)
     for entety in entetyList:
+        if not entety.inScreen(middle, ratio, VIEW_SIZE):
+            continue
         if not checkInter(conn, player, clientToPlayer, entety, entetyList, playersList):
             sendingPellets.append(entety.to_json())
     
-    for blob in playersList:
-        if not checkInter(conn, player, clientToPlayer, blob, entetyList, playersList, True):
-            sendingPlayers.append(blob.to_json())
-    
+    for entety in playersList:
+        if not entety.inScreen(middle, ratio, VIEW_SIZE):
+            continue
+        if not checkInter(conn, player, clientToPlayer, entety, entetyList, playersList, True):
+            sendingPlayers.append(entety.to_json())
     message = json.dumps((player.to_json(), sendingPellets, sendingPlayers))
-    return broadcast(message, conn)
+    broadcast(message, conn)
+
+def findRatio(player):    
+    ratio = 1
+    maxDiff = 2*player.size
+    if maxDiff > 300:
+        ratio = maxDiff / 300
+    
+    return ratio
 
 def newPlayer(conn, playersList, clientToPlayer, name):
     size = 4 + math.sqrt(10) * 6
@@ -146,8 +144,6 @@ def main():
         conn, addr = server.accept()
         listOfClients.append(conn)
         print (addr[0] + " connected")
-        name = recvall(conn, 4096)
-        newPlayer(conn, playersList, clientToPlayer, name)
         _thread.start_new_thread(clientThread, (conn, addr, listOfClients, pelletsList, clientToPlayer, playersList))
     
     for conn in list_of_clients:
