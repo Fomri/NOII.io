@@ -68,7 +68,7 @@ def main(name):
     off_screen_surface = pygame.Surface(VIEW_SIZE)
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    server.connect(("192.168.0.38", 8088)) 
+    server.connect((IP_ADDRESS, 8088)) 
 
     server.sendall(bytes(json.dumps(name) + End, encoding = 'utf8'))
 
