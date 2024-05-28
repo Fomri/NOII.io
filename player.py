@@ -9,7 +9,7 @@ class player:
         self.color = color
         self.mass = mass
         self.size = 4 + math.sqrt(mass) * 6
-        self.speed = 2 * (mass ** -0.5)
+        self.speed = 2 * (mass ** -0.3)
         self.name = name
         self.conn = conn
 
@@ -27,18 +27,26 @@ class player:
             self.y = mapSize[1] - self.size
         if self.y - self.size < 0:
             self.y = self.size
-
         pygame.time.delay(5)
 
     def draw(self, middle, window, ratio):
         size = window.get_size()
         pos = (middle[0] - self.x + size[0] / 2, middle[1] - self.y + size[1] / 2)
-        pygame.draw.circle(window, self.color, pos , self.size / ratio)
-        font = pygame.font.Font(None, 32 // ratio)
-        text_surface = font.render(self.name, True, (0, 0, 0))
-        text_rect = text_surface.get_rect(center = pos)
-        window.blit(text_surface, text_rect)
-        pygame.display.update()
+        if pos[0] + self.size > 0 and pos[0] - self.size < size[0] * ratio:
+            if pos[1] + self.size > 0 and pos[1] - self.size < size[1] * ratio:
+                pygame.draw.circle(window, self.color, pos, self.size / ratio)
+                font = pygame.font.Font(None, 32 // ratio)
+                text_surface = font.render(self.name, True, (0, 0, 0))
+                text_rect = text_surface.get_rect(center = pos)
+                window.blit(text_surface, text_rect)
+    
+    def inScreen(self, middle, ratio, size):
+        pos = (middle[0] - self.x + size[0] / 2, middle[1] - self.y + size[1] / 2)
+        if pos[0] + self.size > 0 and pos[0] - self.size < size[0] * ratio:
+            if pos[1] + self.size > 0 and pos[1] - self.size < size[1] * ratio:
+                return True
+        
+        return False
 
     def eaten(self, player):
         if self.mass <= 0.8 * player.mass:
@@ -54,7 +62,7 @@ class player:
     
     def update(self):
         self.size = 4 + math.sqrt(self.mass) * 6
-        self.speed = 2 * (self.mass ** -0.5)
+        self.speed = 2 * (self.mass ** -0.3)
 
     def to_json(self):
         data = [self.x, self.y, self.color, '', self.name, self.mass]
