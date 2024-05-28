@@ -12,10 +12,19 @@ class pellet:
 
     def draw(self, middle, window, ratio):
         size = window.get_size()
-        if self.x < middle[0] + size[0] / (2 * ratio) and self.x > middle[0] - size[0] / (2 * ratio):
-            if self.y < middle[1] + size[1] / (2 * ratio) and self.y > middle[1] - size[1] / (2 * ratio):
-                pygame.draw.circle(window, self.color, (middle[0] - self.x + size[0] / 2, middle[1] - self.y + size[1] / 2), self.size / ratio)
+        pos = (middle[0] - self.x + size[0] / 2, middle[1] - self.y + size[1] / 2)
+        if pos[0] + self.size > 0 and pos[0] - self.size < size[0] * ratio:
+            if pos[1] + self.size > 0 and pos[1] - self.size < size[1] * ratio:
+                pygame.draw.circle(window, self.color, pos, self.size / ratio)
 
+    def inScreen(self, middle, ratio, size):
+        pos = (middle[0] - self.x + size[0] / 2, middle[1] - self.y + size[1] / 2)
+        if pos[0] + self.size > 0 and pos[0] - self.size < size[0] * ratio:
+            if pos[1] + self.size > 0 and pos[1] - self.size < size[1] * ratio:
+                return True
+        
+        return False
+    
     def eaten(self, player):
         if self.mass <= 0.8 * player.mass:
             x1 = player.x
@@ -25,7 +34,7 @@ class pellet:
             if (x1 - x2) ** 2 + (y1 - y2) ** 2 <= (player.size - self.size) ** 2:
                 player.mass += self.mass
                 player.update()
-                return True
+                return 1
             
         return False
 
