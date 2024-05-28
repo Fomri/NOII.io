@@ -4,33 +4,24 @@ import socket
 import player
 import pellet
 import json
-import _thread
 
 End = 'END_OF_TRANSMITION'
 data = ''
 def recvall(the_socket, bufferSize):
-    total_data=[]
     global data
     if End in data:
-        total_data.append(data[:data.find(End)])
+        value =  json.loads(data[:data.find(End)])
         data = data[data.find(End) + 18:]
-        return json.loads(''.join(total_data))
+        return value
 
     while True:
             data = data + the_socket.recv(bufferSize).decode('utf8')
+            if(data == ''):
+                raise Exception("connection closed")
             if End in data:
-                total_data.append(data[:data.find(End)])
+                value =  json.loads(data[:data.find(End)])
                 data = data[data.find(End) + 18:]
-                break
-            total_data.append(data)
-            if len(total_data)>1:
-                #check if end_of_data was split
-                last_pair = total_data[-2] + total_data[-1]
-                if End in last_pair:
-                    total_data[-2]=last_pair[:last_pair.find(End)]
-                    total_data.pop()
-                    break
-    return json.loads(''.join(total_data))
+                return value
 
 
 def drawBorders(window, middle):
@@ -70,39 +61,46 @@ def sortPlayersKey(player):
     return player.size
 
 def main(name):
+    clock = pygame.time.Clock()
     screen = pygame.display.set_mode(VIEW_SIZE)
-    screen.fill((255, 255, 255))
-    pygame.display.update()
     pygame.init()
 
+    off_screen_surface = pygame.Surface(VIEW_SIZE)
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    server.connect((IP_ADDRESS, PORT)) 
+    server.connect(("192.168.0.38", 8088)) 
 
     server.sendall(bytes(json.dumps(name) + End, encoding = 'utf8'))
 
     pos = (VIEW_SIZE[0] / 2, VIEW_SIZE[1] / 2)
     server.sendall(bytes(json.dumps(pos) + End, encoding='utf8'))
     pelletsList = []
-    while True:
+    running = True
+    while running:
         try:
             p, playersList, pelletsList = updateData(server)
+            off_screen_surface.fill((255, 255, 255))
             ratio = findRatio(p)
-            drawBorders(screen, (p.x, p.y))
+            drawBorders(off_screen_surface, (p.x, p.y))
             middle = (p.x, p.y)
             for entety in pelletsList:
-                entety.draw(middle, screen, ratio)
+                entety.draw(middle, off_screen_surface, ratio)
             for entety in playersList:
-                entety.draw(middle, screen, ratio)
+                entety.draw(middle, off_screen_surface, ratio)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
+                    running = False
+                    server.close()
                     break
             pos = pygame.mouse.get_pos()
             server.sendall(bytes(json.dumps(pos) + End, encoding='utf8'))
+            screen.blit(off_screen_surface, (0, 0))
             pygame.display.update()
-            screen.fill((255, 255, 255))
+            clock.tick(30)
 
         except Exception as e:
             print(e)
+            server.close()
             break
-
+        
+    pygame.quit()
