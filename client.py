@@ -5,8 +5,18 @@ import player
 import pellet
 import json
 
+icon= pygame.image.load("icon.png")
+
+screen_width=1280
+screen_height=720
+
 End = 'END_OF_TRANSMITION'
 data = ''
+pygame.display.set_caption('NOII.io')
+pygame.display.set_icon(icon)
+
+
+
 def recvall(the_socket, bufferSize):
     global data
     if End in data:

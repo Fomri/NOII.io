@@ -1,14 +1,19 @@
 import pygame
 import client
+from pictures import *
+
+icon= pygame.image.load("icon.png")
 
 pygame.init()
 
-screen = pygame.display.set_mode((500, 500)) 
+screen = pygame.display.set_mode((1280, 720)) 
+pygame.display.set_caption('NOII.io')
+pygame.display.set_icon(icon)
 
 base_font = pygame.font.Font(None, 32) 
 user_text = '' 
 
-input_rect = pygame.Rect(200, 100, 140, 32)
+input_rect = pygame.Rect(640, 450, 200, 65)
 
 color_active = pygame.Color('lightskyblue3') 
 
@@ -19,11 +24,16 @@ active = False
 nameWriten = False
 user_text = "Enter Name"
 
-play_button = pygame.Rect(200, 250, 140, 32)
+bg = pygame.image.load("bg.png")
+
+
+
+play_button = pygame.Rect(450, 250, 200, 65)
 
 running = True
 
 while running:
+	
 	for event in pygame.event.get(): 
 		if event.type == pygame.QUIT:
 			running = False
@@ -64,12 +74,13 @@ while running:
 	screen.blit(text_surface, (input_rect.centerx - text_surface.get_width() / 2, input_rect.centery - base_font.get_ascent() / 2)) 
 	play_surface = base_font.render("Play Game", True, (255, 255, 255))
 	pygame.draw.rect(screen, color_passive, play_button) 
-	screen.blit(play_surface, (250 - play_surface.get_width() / 2, 250 - base_font.get_ascent() / 2)) 
+	screen.blit(play_surface, (640 - play_surface.get_width() / 2, 450 - base_font.get_ascent() / 2)) 
 
 	input_rect.w = max(140, text_surface.get_width()+10)
-	input_rect.center = (250, 100)
+	input_rect.center = (640, 250)
 	play_button.w = play_surface.get_width() + 10
-	play_button.center = (250, 250)
+	play_button.center = (640, 450)
+	screen.blit(bg, (0, 0))
 	pygame.display.flip() 
 
 pygame.quit()
