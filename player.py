@@ -9,7 +9,7 @@ class player:
         self.color = color
         self.mass = mass
         self.size = 4 + math.sqrt(mass) * 6
-        self.speed = 2 * (mass ** -0.3)
+        self.speed = 5 * (mass ** -0.3)
         self.name = name
         self.conn = conn
 
@@ -62,7 +62,7 @@ class player:
     
     def update(self):
         self.size = 4 + math.sqrt(self.mass) * 6
-        self.speed = 2 * (self.mass ** -0.3)
+        self.speed = 5 * (self.mass ** -0.3)
 
     def to_json(self):
         data = [self.x, self.y, self.color, '', self.name, self.mass]
