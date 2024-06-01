@@ -1,12 +1,12 @@
 import pygame
 import client
-from pictures import *
+from settings import *
 
-icon= pygame.image.load("icon.png")
+icon= pygame.image.load("pictures/icon.png")
 
 pygame.init()
 
-screen = pygame.display.set_mode((1280, 720)) 
+screen = pygame.display.set_mode(VIEW_SIZE) 
 pygame.display.set_caption('NOII.io')
 pygame.display.set_icon(icon)
 
@@ -14,9 +14,7 @@ base_font = pygame.font.Font(None, 32)
 user_text = '' 
 
 input_rect = pygame.Rect(640, 450, 200, 65)
-
 color_active = pygame.Color('lightskyblue3') 
-
 color_passive = pygame.Color('chartreuse4') 
 color = color_passive 
 active = False
@@ -24,16 +22,13 @@ active = False
 nameWriten = False
 user_text = "Enter Name"
 
-bg = pygame.image.load("bg.png")
-
-
+bg = pygame.image.load("pictures/bg.png")
 
 play_button = pygame.Rect(450, 250, 200, 65)
 
 running = True
-
+clock = pygame.time.Clock()
 while running:
-	
 	for event in pygame.event.get(): 
 		if event.type == pygame.QUIT:
 			running = False
@@ -77,10 +72,11 @@ while running:
 	screen.blit(play_surface, (640 - play_surface.get_width() / 2, 450 - base_font.get_ascent() / 2)) 
 
 	input_rect.w = max(140, text_surface.get_width()+10)
-	input_rect.center = (640, 250)
+	input_rect.center = (VIEW_SIZE[0] / 2, VIEW_SIZE[1] / 2.88)
 	play_button.w = play_surface.get_width() + 10
-	play_button.center = (640, 450)
+	play_button.center = (VIEW_SIZE[0] / 2, VIEW_SIZE[1] / 1.6)
 	screen.blit(bg, (0, 0))
 	pygame.display.flip() 
+	clock.tick(30)
 
 pygame.quit()
