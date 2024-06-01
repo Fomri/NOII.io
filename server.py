@@ -16,8 +16,9 @@ def recvall(the_socket, bufferSize, data):
         return (value, data)
 
     while True:
+            prev = data
             data = data + the_socket.recv(bufferSize).decode('utf8')
-            if(data == ''):
+            if(data == prev):
                 raise Exception("connection killed")
             if End in data:
                 value =  json.loads(data[:data.find(End)])
@@ -26,8 +27,6 @@ def recvall(the_socket, bufferSize, data):
 
 def checkInter(conn, player, clientToPlayer, entety, pelletsList, playersList, playerType = False):
     if entety.eaten(player):
-        playersList.append(player)
-        clientToPlayer[conn] = player
         if playerType:
             try:
                 conn2 = entety.conn
@@ -70,6 +69,7 @@ def clientThread(conn, addr, listOfClients, pelletsList, clientToPlayer, players
     except:
         handleError(conn, addr, clientToPlayer, playersList, listOfClients)
         return -1
+
 
 def move(conn, clientToPlayer, playersList, data):
     pos, remaine = recvall(conn, 4096, data)
