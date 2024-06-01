@@ -11,4 +11,4 @@ def generatePellets(pelletsList):
         b = random.randint(0, 255)
         color = (r, g, b)
         new = pellet.pellet(x, y, color)
-        pelletsList.append(new)  
+        pelletsList.append(new)
