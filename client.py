@@ -5,18 +5,8 @@ import player
 import pellet
 import json
 
-icon= pygame.image.load("icon.png")
-
-screen_width=1280
-screen_height=720
-
 End = 'END_OF_TRANSMITION'
 data = ''
-pygame.display.set_caption('NOII.io')
-pygame.display.set_icon(icon)
-
-
-
 def recvall(the_socket, bufferSize):
     global data
     if End in data:
@@ -25,8 +15,9 @@ def recvall(the_socket, bufferSize):
         return value
 
     while True:
+            prev = data
             data = data + the_socket.recv(bufferSize).decode('utf8')
-            if(data == ''):
+            if(data == prev):
                 raise Exception("connection closed")
             if End in data:
                 value =  json.loads(data[:data.find(End)])
@@ -78,7 +69,7 @@ def main(name):
     off_screen_surface = pygame.Surface(VIEW_SIZE)
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    server.connect((IP_ADDRESS, 8088)) 
+    server.connect((IP_ADDRESS, PORT)) 
 
     server.sendall(bytes(json.dumps(name) + End, encoding = 'utf8'))
 
@@ -112,5 +103,3 @@ def main(name):
             print(e)
             server.close()
             break
-        
-    pygame.quit()
